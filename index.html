@@ -200,12 +200,17 @@ pairStats[pairA].l++
 
 document.getElementById("history").innerHTML = historyHTML
 
-let playerArray = Object.keys(playerStats).map(p=>{
-let w = playerStats[p].w
-let l = playerStats[p].l
-let pct = w+l ? (w/(w+l)) : 0
-return {name:p,w,l,pct}
+let pairs = Object.keys(pairStats).map(pair=>{
+
+let w = pairStats[pair].w
+let l = pairStats[pair].l
+let matches = w + l
+let pct = matches ? w/matches : 0
+
+return {pair,w,l,matches,pct}
+
 })
+.filter(p => p.matches >= 3)
 
 playerArray.sort((a,b)=>b.pct-a.pct)
 
