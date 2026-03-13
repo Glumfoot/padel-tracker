@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Padel Tracker</title>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore-compat.js"></script>
+</head>
+
+<body>
+
+<h2>Padel Match Tracker</h2>
+
+<h3>Team A</h3>
+<input id="a1" placeholder="Player 1">
+<input id="a2" placeholder="Player 2">
+
+<h3>Team B</h3>
+<input id="b1" placeholder="Player 1">
+<input id="b2" placeholder="Player 2">
+
+<h3>Score</h3>
+<input id="score" placeholder="6-4 7-5">
+
+<br><br>
+
+<button onclick="recordMatch()">Record Match</button>
+<button onclick="undoMatch()">Undo Last Match</button>
+
+<h3>Leaderboard</h3>
+<div id="leaderboard"></div>
+
+<h3>Match History</h3>
+<div id="history"></div>
+
+<script>
+
+const firebaseConfig = {
+  apiKey: "PASTE_KEY",
+  authDomain: "PASTE_DOMAIN",
+  projectId: "PASTE_PROJECT"
+}
+
+firebase.initializeApp(firebaseConfig)
+
+const db = firebase.firestore()
+
+function recordMatch(){
+
+let a1=document.getElementById("a1").value
+let a2=document.getElementById("a2").value
+let b1=document.getElementById("b1").value
+let b2=document.getElementById("b2").value
+let score=document.getElementById("score").value
+
+let teamA=a1+" / "+a2
+let teamB=b1+" / "+b2
+
+let winner=teamA
+if(score.includes("6-7")||score.includes("5-7")) winner=teamB
+
+db.collection("matches").add({
+teamA:teamA,
+teamB:teamB,
+score:score,
+winner:winner,
+created:new Date()
+})
+
+}
+
+function undoMatch(){
+
+db.collection("matches")
+.orderBy("created","desc")
+.limit(1)
+.get()
+.then(snapshot=>{
+
+snapshot.forEach(doc=>{
+db.collection("matches").doc(doc.id).delete()
+})
+
+})
+
+}
+
+db.collection("matches")
+.orderBy("created")
+.onSnapshot(snapshot=>{
+
+let history=""
+let stats={}
+
+snapshot.forEach(doc=>{
+
+let m=doc.data()
+
+history+=m.teamA+" vs "+m.teamB+" ("+m.score+")<br>"
+
+let players=[...m.teamA.split(" / "),...m.teamB.split(" / ")]
+
+players.forEach(p=>{
+if(!stats[p]) stats[p]={w:0,l:0}
+})
+
+m.teamA.split(" / ").forEach(p=>{
+if(m.winner==m.teamA) stats[p].w++
+else stats[p].l++
+})
+
+m.teamB.split(" / ").forEach(p=>{
+if(m.winner==m.teamB) stats[p].w++
+else stats[p].l++
+})
+
+})
+
+let board=""
+
+Object.keys(stats).forEach(p=>{
+
+let w=stats[p].w
+let l=stats[p].l
+let pct=((w/(w+l))*100).toFixed(0)
+
+board+=p+" — "+w+"W "+l+"L ("+pct+"%)<br>"
+
+})
+
+document.getElementById("leaderboard").innerHTML=board
+document.getElementById("history").innerHTML=history
+
+})
+
+</script>
+
+</body>
+</html>
