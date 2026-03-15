@@ -222,6 +222,9 @@ leaderboardHTML += `
 })
 
 leaderboardHTML += "</table>"
+ 
+ document.getElementById("leaderboard").innerHTML = leaderboardHTML
+ 
 // PAIRS LEADERBOARD
 
 let pairs=Object.keys(pairStats).map(pair=>{
