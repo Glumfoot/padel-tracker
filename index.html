@@ -40,14 +40,15 @@ margin-top:30px;
 
 <h3>Enter Match</h3>
 
-<input id="teamA" placeholder="Team A (Player1 / Player2)">
-<br>
+<b>Team A</b><br>
+<input id="a1" placeholder="Player 1"><br>
+<input id="a2" placeholder="Player 2"><br>
 
-<input id="teamB" placeholder="Team B (Player3 / Player4)">
-<br>
+<b>Team B</b><br>
+<input id="b1" placeholder="Player 3"><br>
+<input id="b2" placeholder="Player 4"><br>
 
-<input id="score" placeholder="Score (eg 6-4 7-5)">
-<br>
+<input id="score" placeholder="Score (eg 6-4 7-5)"><br>
 
 <button onclick="recordMatch()">Record Match</button>
 <button onclick="undoMatch()">Undo Last Match</button>
@@ -55,32 +56,24 @@ margin-top:30px;
 </div>
 
 <div class="section">
-
 <h3>Player Leaderboard</h3>
 <div id="leaderboard"></div>
-
 </div>
 
 <div class="section">
-
-<h3>Best Pairs</h3>
+<h3>Most Successful Pairs (min 3 matches)</h3>
 <div id="pairs"></div>
-
 </div>
 
 <div class="section">
-
 <h3>Match History</h3>
 <div id="history"></div>
-
 </div>
 
 <script>
 
-// PASTE YOUR FIREBASE CONFIG HERE
-
 const firebaseConfig = {
-  apiKey: "AIzaSyDqUDIfqas8BKyo9gVapyl05vjvsZ4Qcig",
+ apiKey: "AIzaSyDqUDIfqas8BKyo9gVapyl05vjvsZ4Qcig",
   authDomain: "padel-tracker-ebbec.firebaseapp.com",
   projectId: "padel-tracker-ebbec",
   storageBucket: "padel-tracker-ebbec.firebasestorage.app",
@@ -89,39 +82,38 @@ const firebaseConfig = {
 };
 
 firebase.initializeApp(firebaseConfig)
-
 const db = firebase.firestore()
 
 function recordMatch(){
 
-let teamA = document.getElementById("teamA").value
-let teamB = document.getElementById("teamB").value
-let score = document.getElementById("score").value
+let a1=document.getElementById("a1").value
+let a2=document.getElementById("a2").value
+let b1=document.getElementById("b1").value
+let b2=document.getElementById("b2").value
+let score=document.getElementById("score").value
 
-let winner = ""
+let teamA=[a1,a2]
+let teamB=[b1,b2]
 
-let sets = score.split(" ")
+let sets=score.split(" ")
 
-let winsA = 0
-let winsB = 0
+let winsA=0
+let winsB=0
 
-sets.forEach(s => {
-
-let parts = s.split("-")
-
-if(Number(parts[0]) > Number(parts[1])) winsA++
+sets.forEach(s=>{
+let parts=s.split("-")
+if(Number(parts[0])>Number(parts[1])) winsA++
 else winsB++
-
 })
 
-winner = winsA > winsB ? teamA : teamB
+let winner = winsA>winsB ? "A":"B"
 
 db.collection("matches").add({
-teamA: teamA,
-teamB: teamB,
-score: score,
-winner: winner,
-created: new Date()
+teamA,
+teamB,
+score,
+winner,
+created:new Date()
 })
 
 }
@@ -132,9 +124,9 @@ db.collection("matches")
 .orderBy("created","desc")
 .limit(1)
 .get()
-.then(snapshot => {
+.then(snapshot=>{
 
-snapshot.forEach(doc => {
+snapshot.forEach(doc=>{
 db.collection("matches").doc(doc.id).delete()
 })
 
@@ -146,99 +138,97 @@ function loadMatches(){
 
 db.collection("matches")
 .orderBy("created")
-.onSnapshot(snapshot => {
+.onSnapshot(snapshot=>{
 
-let historyHTML = ""
+let historyHTML=""
+let playerStats={}
+let pairStats={}
 
-let playerStats = {}
-let pairStats = {}
+snapshot.forEach(doc=>{
 
-snapshot.forEach(doc => {
+let m=doc.data()
 
-let m = doc.data()
+let teamA=m.teamA
+let teamB=m.teamB
 
-historyHTML += m.teamA + " vs " + m.teamB + " — " + m.score + "<br>"
+historyHTML+=`${teamA.join(" / ")} vs ${teamB.join(" / ")} — ${m.score}<br>`
 
-let playersA = m.teamA.split(" / ")
-let playersB = m.teamB.split(" / ")
-
-playersA.concat(playersB).forEach(p=>{
-if(!playerStats[p]) playerStats[p] = {w:0,l:0}
+teamA.concat(teamB).forEach(p=>{
+if(!playerStats[p]) playerStats[p]={w:0,l:0}
 })
 
-if(m.winner === m.teamA){
-
-playersA.forEach(p=>playerStats[p].w++)
-playersB.forEach(p=>playerStats[p].l++)
-
+if(m.winner==="A"){
+teamA.forEach(p=>playerStats[p].w++)
+teamB.forEach(p=>playerStats[p].l++)
 }else{
-
-playersB.forEach(p=>playerStats[p].w++)
-playersA.forEach(p=>playerStats[p].l++)
-
+teamB.forEach(p=>playerStats[p].w++)
+teamA.forEach(p=>playerStats[p].l++)
 }
 
-let pairA = m.teamA
-let pairB = m.teamB
+let pairA=teamA.join(" / ")
+let pairB=teamB.join(" / ")
 
-if(!pairStats[pairA]) pairStats[pairA] = {w:0,l:0}
-if(!pairStats[pairB]) pairStats[pairB] = {w:0,l:0}
+if(!pairStats[pairA]) pairStats[pairA]={w:0,l:0}
+if(!pairStats[pairB]) pairStats[pairB]={w:0,l:0}
 
-if(m.winner === pairA){
-
+if(m.winner==="A"){
 pairStats[pairA].w++
 pairStats[pairB].l++
-
 }else{
-
 pairStats[pairB].w++
 pairStats[pairA].l++
-
 }
 
 })
 
-document.getElementById("history").innerHTML = historyHTML
+document.getElementById("history").innerHTML=historyHTML
 
-let pairs = Object.keys(pairStats).map(pair=>{
+// PLAYER LEADERBOARD
 
-let w = pairStats[pair].w
-let l = pairStats[pair].l
-let matches = w + l
-let pct = matches ? w/matches : 0
+let players=Object.keys(playerStats).map(p=>{
+
+let w=playerStats[p].w
+let l=playerStats[p].l
+let matches=w+l
+let pct=matches ? w/matches : 0
+
+return {name:p,w,l,matches,pct}
+
+})
+
+players.sort((a,b)=>b.pct-a.pct)
+
+let leaderboardHTML=""
+
+players.forEach(p=>{
+leaderboardHTML+=`${p.name} — ${p.w}W ${p.l}L | ${p.matches} matches (${(p.pct*100).toFixed(0)}%)<br>`
+})
+
+document.getElementById("leaderboard").innerHTML=leaderboardHTML
+
+// PAIRS LEADERBOARD
+
+let pairs=Object.keys(pairStats).map(pair=>{
+
+let w=pairStats[pair].w
+let l=pairStats[pair].l
+let matches=w+l
+let pct=matches ? w/matches : 0
 
 return {pair,w,l,matches,pct}
 
 })
-.filter(p => p.matches >= 3)
+.filter(p=>p.matches>=3)
 
-playerArray.sort((a,b)=>b.pct-a.pct)
+pairs.sort((a,b)=>b.pct-a.pct)
 
-let leaderboardHTML = ""
+let pairsHTML=""
 
-playerArray.forEach(p=>{
-leaderboardHTML += `${p.name} — ${p.w}W ${p.l}L (${(p.pct*100).toFixed(0)}%)<br>`
+pairs.forEach(p=>{
+pairsHTML+=`${p.pair} — ${p.w}W ${p.l}L | ${p.matches} matches (${(p.pct*100).toFixed(0)}%)<br>`
 })
 
-document.getElementById("leaderboard").innerHTML = leaderboardHTML
-
-let playerArray = Object.keys(playerStats).map(p=>{
-let w = playerStats[p].w
-let l = playerStats[p].l
-let matches = w + l
-let pct = matches ? (w/matches) : 0
-return {name:p,w,l,matches,pct}
-})
-
-pairArray.sort((a,b)=>b.pct-a.pct)
-
-let pairsHTML = ""
-
-pairArray.forEach(p=>{
-pairsHTML += `${p.pair} — ${p.w}W ${p.l}L (${(p.pct*100).toFixed(0)}%)<br>`
-})
-
-document.getElementById("pairs").innerHTML = pairsHTML
+document.getElementById("pairs").innerHTML=pairsHTML
 
 })
 
