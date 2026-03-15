@@ -198,14 +198,30 @@ return {name:p,w,l,matches,pct}
 
 players.sort((a,b)=>b.pct-a.pct)
 
-let leaderboardHTML=""
+let leaderboardHTML = `
+<table border="1" cellpadding="6" style="border-collapse:collapse;width:100%">
+<tr>
+<th>Player</th>
+<th>Wins</th>
+<th>Losses</th>
+<th>Matches</th>
+<th>Win %</th>
+</tr>
+`
 
 players.forEach(p=>{
-leaderboardHTML+=`${p.name} — ${p.w}W ${p.l}L | ${p.matches} matches (${(p.pct*100).toFixed(0)}%)<br>`
+leaderboardHTML += `
+<tr>
+<td>${p.name}</td>
+<td>${p.w}</td>
+<td>${p.l}</td>
+<td>${p.matches}</td>
+<td>${(p.pct*100).toFixed(0)}%</td>
+</tr>
+`
 })
 
-document.getElementById("leaderboard").innerHTML=leaderboardHTML
-
+leaderboardHTML += "</table>"
 // PAIRS LEADERBOARD
 
 let pairs=Object.keys(pairStats).map(pair=>{
@@ -222,11 +238,30 @@ return {pair,w,l,matches,pct}
 
 pairs.sort((a,b)=>b.pct-a.pct)
 
-let pairsHTML=""
+let pairsHTML = `
+<table border="1" cellpadding="6" style="border-collapse:collapse;width:100%">
+<tr>
+<th>Pair</th>
+<th>Wins</th>
+<th>Losses</th>
+<th>Matches</th>
+<th>Win %</th>
+</tr>
+`
 
 pairs.forEach(p=>{
-pairsHTML+=`${p.pair} — ${p.w}W ${p.l}L | ${p.matches} matches (${(p.pct*100).toFixed(0)}%)<br>`
+pairsHTML += `
+<tr>
+<td>${p.pair}</td>
+<td>${p.w}</td>
+<td>${p.l}</td>
+<td>${p.matches}</td>
+<td>${(p.pct*100).toFixed(0)}%</td>
+</tr>
+`
 })
+
+pairsHTML += "</table>"
 
 document.getElementById("pairs").innerHTML=pairsHTML
 
